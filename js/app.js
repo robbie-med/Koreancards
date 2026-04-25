@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cards = Storage.getCards();
     if (cards.length <= STARTER_VOCABULARY.length) {
         setTimeout(() => {
-            showToast('Welcome! Start by studying cards or add your own with wife's audio!', 'info', 5000);
+            showToast("Welcome! Start by studying cards or add your own with wife's audio!", 'info', 5000);
         }, 1000);
     }
 });

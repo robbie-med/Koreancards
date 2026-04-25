@@ -480,7 +480,7 @@ function renderSuggestionsView() {
                             <span class="sug-korean">${s.korean}</span>
                             <span class="sug-english">${s.english}</span>
                             <span class="sug-level">${s.level}</span>
-                            <button class="sug-add-btn" onclick="addSuggestion('${s.korean}', '${s.english.replace(/'/g, "\'")}', '${s.reading || ''}', '${s.topic}', '${s.level}', '${(s.notes || '').replace(/'/g, "\'")}')">+ Add</button>
+                            <button class="sug-add-btn" onclick="addSuggestion('${s.korean}', '${s.english.replace(/'/g, "&#39;")}', '${s.reading || ''}', '${s.topic}', '${s.level}', '${(s.notes || '').replace(/'/g, "&#39;")}')">+ Add</button>
                         </div>
                     `).join('')}
                 </div>
