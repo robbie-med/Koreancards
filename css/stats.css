@@ -90,6 +90,229 @@
 
 .topik-recommendation strong { color: var(--success); }
 
+/* ===== TOPIK LEVEL BREAKDOWN ===== */
+.vocab-dist-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vocab-distribution {
+    display: flex;
+    height: 18px;
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--bg);
+    margin-bottom: 8px;
+    gap: 2px;
+}
+
+.vocab-segment {
+    transition: width 0.5s ease;
+    min-width: 4px;
+}
+
+.vocab-dist-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.vocab-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vocab-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.topik-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.topik-level-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.65;
+    transition: opacity 0.2s;
+}
+
+.topik-level-row:last-child { border-bottom: none; }
+
+.topik-level-row.achieved { opacity: 1; }
+.topik-level-row.current-level { opacity: 1; }
+
+.topik-level-badge {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.topik-level-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.topik-level-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.topik-level-desc {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.goal-tag {
+    font-size: 0.65rem;
+    background: #FFF3E0;
+    color: #E65100;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.achieved-tag {
+    font-size: 0.75rem;
+    color: var(--success);
+    font-weight: 700;
+}
+
+.topik-level-right {
+    flex-shrink: 0;
+    width: 110px;
+    text-align: right;
+}
+
+.topik-level-bar-wrap {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.topik-level-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.topik-level-count {
+    font-size: 0.75rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* ===== LEVEL-GROUPED SUGGESTIONS ===== */
+.level-suggestion-section {
+    margin-bottom: 24px;
+}
+
+.level-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    margin-bottom: 2px;
+}
+
+.level-section-badge {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+}
+
+.level-section-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.level-section-title-wrap strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.level-section-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.level-section-progress-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.level-section-progress-bar {
+    width: 60px;
+    height: 6px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.level-section-pct {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 28px;
+    text-align: right;
+}
+
+.sug-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.sug-reading {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--secondary);
+}
+
+.sug-topic-chip {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
 /* ===== SUGGESTIONS VIEW ===== */
 .suggestions-header {
     margin-bottom: 20px;

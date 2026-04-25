@@ -443,46 +443,63 @@ function renderAddView() {
 function renderSuggestionsView() {
     const container = document.getElementById('main-content');
     const cards = Storage.getCards();
-    const suggestions = SuggestionEngine.getSuggestions(cards, 30);
+    const { sections, currentLevel } = SuggestionEngine.getSuggestionsByLevel(cards);
     const smartSuggestions = SuggestionEngine.getSmartSuggestions(cards);
 
-    // Group by topic
-    const byTopic = {};
-    suggestions.forEach(s => {
-        if (!byTopic[s.topic]) byTopic[s.topic] = [];
-        byTopic[s.topic].push(s);
-    });
+    function wordRow(s) {
+        const topicMeta = TOPIC_METADATA[s.topic];
+        const safeEnglish = (s.english || '').replace(/'/g, "&#39;");
+        const safeNotes = (s.notes || '').replace(/'/g, "&#39;");
+        const safeReading = (s.reading || '').replace(/'/g, "&#39;");
+        return `
+            <div class="suggestion-item" id="sug-${s.korean}">
+                <span class="sug-korean">${s.korean}</span>
+                <div class="sug-meta">
+                    <span class="sug-english">${s.english}</span>
+                    ${s.reading ? `<span class="sug-reading">[${s.reading}]</span>` : ''}
+                </div>
+                <span class="sug-topic-chip" title="${topicMeta?.label || s.topic}">${topicMeta?.icon || '📌'}</span>
+                <button class="sug-add-btn" onclick="addSuggestion('${s.korean}', '${safeEnglish}', '${safeReading}', '${s.topic}', '${s.level}', '${safeNotes}')">+ Add</button>
+            </div>
+        `;
+    }
 
     container.innerHTML = `
         <div class="suggestions-header">
             <h2>💡 Suggested Words</h2>
-            <p>Based on your progress, here are the best next words to learn.</p>
+            <p>Personalized by your current level and TOPIK goal.</p>
         </div>
 
         ${smartSuggestions.length > 0 ? `
         <div class="smart-suggestions">
-            <h3>🎯 Smart Recommendations</h3>
-            ${smartSuggestions.map(s => `
-                <p>${s.message}</p>
-                ${s.topics ? `<div class="smart-list">${s.topics.map(t => 
-                    `<button class="smart-chip" onclick="filterSuggestions('${t}')">${TOPIC_METADATA[t]?.label || t}</button>`
-                ).join('')}</div>` : ''}
-            `).join('')}
+            <h3>🎯 Insights</h3>
+            ${smartSuggestions.map(s => `<p>${s.message}</p>`).join('')}
         </div>
         ` : ''}
 
-        ${Object.entries(byTopic).map(([topic, items]) => `
-            <div class="topic-section">
-                <h3>${TOPIC_METADATA[topic]?.icon || '📌'} ${TOPIC_METADATA[topic]?.label || topic}</h3>
-                <div class="suggestion-list">
-                    ${items.slice(0, 5).map(s => `
-                        <div class="suggestion-item" id="sug-${s.korean}">
-                            <span class="sug-korean">${s.korean}</span>
-                            <span class="sug-english">${s.english}</span>
-                            <span class="sug-level">${s.level}</span>
-                            <button class="sug-add-btn" onclick="addSuggestion('${s.korean}', '${s.english.replace(/'/g, "&#39;")}', '${s.reading || ''}', '${s.topic}', '${s.level}', '${(s.notes || '').replace(/'/g, "&#39;")}')">+ Add</button>
+        ${sections.length === 0 ? `
+            <div class="empty-state">
+                <div class="icon">🎉</div>
+                <h2>All caught up!</h2>
+                <p>You've added all the starter words. Keep adding your own vocabulary in the Add tab.</p>
+            </div>
+        ` : sections.map(section => `
+            <div class="level-suggestion-section">
+                <div class="level-section-header" style="border-left: 4px solid ${section.color}; background: ${section.light}">
+                    <span class="level-section-badge" style="background:${section.color}">${section.short}</span>
+                    <div class="level-section-title-wrap">
+                        <strong>${section.title}</strong>
+                        <span class="level-section-subtitle">${section.subtitle}</span>
+                    </div>
+                    <div class="level-section-progress-wrap">
+                        <div class="level-section-progress-bar">
+                            <div style="width:${section.progress}%;background:${section.color};height:100%;border-radius:3px;transition:width 0.4s"></div>
                         </div>
-                    `).join('')}
+                        <span class="level-section-pct">${section.progress}%</span>
+                    </div>
+                </div>
+                <div class="suggestion-list">
+                    ${section.words.map(s => wordRow(s)).join('')}
                 </div>
             </div>
         `).join('')}
@@ -492,7 +509,6 @@ function renderSuggestionsView() {
 function addSuggestion(korean, english, reading, topic, level, notes) {
     const cards = Storage.getCards();
 
-    // Check if already exists
     if (cards.some(c => c.front === korean)) {
         showToast('Already in your deck!', 'info');
         return;
@@ -523,20 +539,14 @@ function addSuggestion(korean, english, reading, topic, level, notes) {
     stats.cardsAdded++;
     Storage.saveStats(stats);
 
-    // Mark as added in UI
     const item = document.getElementById(`sug-${korean}`);
     if (item) {
         item.classList.add('added');
         item.querySelector('.sug-add-btn').textContent = '✓ Added';
+        item.querySelector('.sug-add-btn').disabled = true;
     }
 
     showToast(`Added "${korean}" to your deck!`, 'success');
-}
-
-function filterSuggestions(topic) {
-    // Re-render with filter (simplified - just scroll to topic)
-    const section = document.querySelector(`h3:contains('${TOPIC_METADATA[topic]?.label || topic}')`);
-    if (section) section.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Stats View
@@ -546,7 +556,12 @@ function renderStatsView() {
     const stats = Storage.getStats();
     const srsStats = SRS.getStats(cards);
     const topik = TOPIKEstimator.estimateLevel(cards);
+    const detailed = topik.detailed;
     const yearProgress = TOPIKEstimator.getCurrentYearProgress(cards);
+    const byLevel = TOPIKEstimator.getVocabByLevel(cards);
+    const settings = Storage.getSettings();
+    const goalLevel = settings.topikGoal || 'TOPIK6';
+    const levels = ['TOPIK1', 'TOPIK2', 'TOPIK3', 'TOPIK4', 'TOPIK5', 'TOPIK6'];
 
     // Build heatmap data (last 28 days)
     const heatmapDays = [];
@@ -561,6 +576,44 @@ function renderStatsView() {
             level: dayData ? Math.min(4, Math.ceil(dayData.cards / 5)) : 0,
         });
     }
+
+    // Vocabulary distribution bar (stacked segments)
+    const totalCards = cards.length || 1;
+    const distSegments = detailed.map(d => ({
+        level: d.level,
+        color: d.color,
+        pct: Math.round((d.cardsAtLevel / totalCards) * 100),
+        count: d.cardsAtLevel,
+        short: d.short,
+    })).filter(s => s.count > 0);
+
+    // Per-level rows
+    const levelRows = detailed.map(d => {
+        const isGoal = d.level === goalLevel;
+        const isCurrent = d.level === topik.level;
+        return `
+            <div class="topik-level-row ${d.achieved ? 'achieved' : ''} ${isCurrent ? 'current-level' : ''}">
+                <span class="topik-level-badge" style="background:${d.color};color:white">${d.short}</span>
+                <div class="topik-level-info">
+                    <div class="topik-level-name">
+                        ${d.label}
+                        ${isGoal ? '<span class="goal-tag">🎯 goal</span>' : ''}
+                        ${d.achieved ? '<span class="achieved-tag">✓</span>' : ''}
+                    </div>
+                    <div class="topik-level-desc">${d.description}</div>
+                </div>
+                <div class="topik-level-right">
+                    <div class="topik-level-bar-wrap">
+                        <div class="topik-level-bar-fill" style="width:${d.progress}%;background:${d.color}"></div>
+                    </div>
+                    <div class="topik-level-count">
+                        ${d.cumulative} / ${d.threshold}
+                        ${d.achieved ? '' : `<span style="color:var(--text-light);font-size:0.75rem;"> · ${d.wordsNeeded} more</span>`}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
 
     container.innerHTML = `
         <h2 style="margin-bottom:20px;">📊 Your Progress</h2>
@@ -579,36 +632,48 @@ function renderStatsView() {
                 <div class="stat-label">Study Sessions</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">${stats.currentStreak}</div>
+                <div class="stat-value">${Storage.getStreak().current}</div>
                 <div class="stat-label">Day Streak</div>
             </div>
         </div>
 
-        <div class="topik-section">
-            <h3>🎯 TOPIK Level Estimate</h3>
-            <div class="topik-gauge">
-                <div class="topik-gauge-fill" style="width: ${topik.progress}%" data-level="${topik.level}"></div>
+        <div class="card">
+            <h3 class="card-title">📈 TOPIK Vocabulary Progress</h3>
+
+            <div class="vocab-dist-label">Your ${cards.length} words by level:</div>
+            <div class="vocab-distribution">
+                ${distSegments.length > 0
+                    ? distSegments.map(s =>
+                        `<div class="vocab-segment" style="width:${s.pct}%;background:${s.color}" title="${s.short}: ${s.count} words"></div>`
+                      ).join('')
+                    : '<div class="vocab-segment" style="width:100%;background:var(--border)"></div>'
+                }
             </div>
-            <div class="topik-levels">
-                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+            ${distSegments.length > 0 ? `
+            <div class="vocab-dist-legend">
+                ${distSegments.map(s =>
+                    `<span class="vocab-legend-item"><span class="vocab-legend-dot" style="background:${s.color}"></span>${s.short}: ${s.count}</span>`
+                ).join('')}
+            </div>` : ''}
+
+            <div class="topik-breakdown">
+                ${levelRows}
             </div>
-            <div style="margin-top:12px;">
-                <strong>Current: ${topik.level}</strong> — ${topik.recommendation}
-            </div>
-            <div class="topik-recommendation">
-                <strong>Next Test:</strong> ${topik.testRecommendation.nextTest}<br>
-                <strong>When:</strong> ${topik.testRecommendation.timeline}
+
+            <div class="topik-recommendation" style="margin-top:16px;">
+                <strong>Estimated level: ${topik.level}</strong> — ${topik.recommendation}<br>
+                <strong>Next test:</strong> ${topik.testRecommendation.nextTest} · ${topik.testRecommendation.timeline}
             </div>
         </div>
 
         <div class="card">
-            <h3 class="card-title">📅 5-Year Plan Progress</h3>
-            <p style="margin-bottom:12px;color:var(--text-light);">Year ${yearProgress.year}: ${yearProgress.milestone.goal}</p>
+            <h3 class="card-title">📅 5-Year Plan · Year ${yearProgress.year}</h3>
+            <p style="margin-bottom:12px;color:var(--text-light);">${yearProgress.milestone.goal}</p>
             <div class="progress-bar" style="margin-bottom:8px;">
                 <div class="progress-fill" style="width: ${yearProgress.cardProgress}%"></div>
             </div>
             <p style="font-size:0.85rem;color:var(--text-light);">
-                ${cards.length} / ${yearProgress.milestone.cards} cards needed this year 
+                ${cards.length} / ${yearProgress.milestone.cards} cards this year
                 (${yearProgress.cardsNeeded > 0 ? yearProgress.cardsNeeded + ' more needed' : 'On track!'})
             </p>
         </div>
@@ -708,6 +773,25 @@ function renderSettingsView() {
         </div>
 
         <div class="card">
+            <h3 class="card-title">🎯 TOPIK Goal</h3>
+
+            <div class="settings-row">
+                <div>
+                    <label>Target Level</label>
+                    <div class="setting-desc">Suggestions and progress are optimized toward this goal</div>
+                </div>
+                <select id="setting-topik-goal" style="width:160px;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem;">
+                    <option value="TOPIK1" ${settings.topikGoal === 'TOPIK1' ? 'selected' : ''}>TOPIK I · Level 1</option>
+                    <option value="TOPIK2" ${settings.topikGoal === 'TOPIK2' ? 'selected' : ''}>TOPIK I · Level 2</option>
+                    <option value="TOPIK3" ${settings.topikGoal === 'TOPIK3' ? 'selected' : ''}>TOPIK II · Level 3</option>
+                    <option value="TOPIK4" ${settings.topikGoal === 'TOPIK4' ? 'selected' : ''}>TOPIK II · Level 4</option>
+                    <option value="TOPIK5" ${settings.topikGoal === 'TOPIK5' ? 'selected' : ''}>TOPIK II · Level 5</option>
+                    <option value="TOPIK6" ${(!settings.topikGoal || settings.topikGoal === 'TOPIK6') ? 'selected' : ''}>TOPIK II · Level 6 / 의사국가고시</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
             <h3 class="card-title">💾 Data Management</h3>
 
             <div class="settings-row">
@@ -761,6 +845,7 @@ function renderSettingsView() {
         settings.readingMode = document.getElementById('setting-reading').checked;
         settings.showReading = document.getElementById('setting-reading-guide').checked;
         settings.autoPlayAudio = document.getElementById('setting-autoplay').checked;
+        settings.topikGoal = document.getElementById('setting-topik-goal').value;
         Storage.saveSettings(settings);
         showToast('Settings saved', 'success');
     };

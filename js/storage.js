@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
     showReading: true,
     newCardsPerDay: 5,
     reviewCardsPerDay: 20,
+    topikGoal: 'TOPIK6',
 };
 
 const DEFAULT_STATS = {
