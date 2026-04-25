@@ -2,6 +2,26 @@
 // VIEWS.JS - UI view rendering and interactions
 // ============================================
 
+// Shared word-row builder used by suggestions view, search, and show-more
+function buildWordRow(s) {
+    const topicMeta = TOPIC_METADATA[s.topic];
+    const safeEnglish = (s.english || '').replace(/'/g, "&#39;");
+    const safeNotes = (s.notes || '').replace(/'/g, "&#39;");
+    const safeReading = (s.reading || '').replace(/'/g, "&#39;");
+    const safeKorean = s.korean.replace(/'/g, "&#39;");
+    return `
+        <div class="suggestion-item" id="sug-${safeKorean}">
+            <span class="sug-korean">${s.korean}</span>
+            <div class="sug-meta">
+                <span class="sug-english">${s.english}</span>
+                ${s.reading ? `<span class="sug-reading">[${s.reading}]</span>` : ''}
+            </div>
+            <span class="sug-topic-chip" title="${topicMeta?.label || s.topic}">${topicMeta?.icon || '📌'}</span>
+            <button class="sug-add-btn" onclick="addSuggestion('${safeKorean}', '${safeEnglish}', '${safeReading}', '${s.topic}', '${s.level}', '${safeNotes}')">+ Add</button>
+        </div>
+    `;
+}
+
 // Toast notifications
 function showToast(message, type = 'info', duration = 3000) {
     const container = document.getElementById('toast-container');
@@ -443,49 +463,25 @@ function renderAddView() {
 function renderSuggestionsView() {
     const container = document.getElementById('main-content');
     const cards = Storage.getCards();
-    const { sections, currentLevel } = SuggestionEngine.getSuggestionsByLevel(cards);
+    const deckSet = new Set(cards.map(c => c.front));
+    const { sections } = SuggestionEngine.getSuggestionsByLevel(cards);
     const smartSuggestions = SuggestionEngine.getSmartSuggestions(cards);
+    const poolTotal = SuggestionEngine.pool.filter(w => !deckSet.has(w.korean)).length;
 
-    function wordRow(s) {
-        const topicMeta = TOPIC_METADATA[s.topic];
-        const safeEnglish = (s.english || '').replace(/'/g, "&#39;");
-        const safeNotes = (s.notes || '').replace(/'/g, "&#39;");
-        const safeReading = (s.reading || '').replace(/'/g, "&#39;");
+    // Compute total available per section so show-more buttons know the remainder
+    sections.forEach(section => {
+        if (section.level === 'medical') {
+            section.totalAvailable = SuggestionEngine.pool.filter(w => !deckSet.has(w.korean) && w.topic === 'medical').length;
+        } else {
+            section.totalAvailable = SuggestionEngine.pool.filter(w => !deckSet.has(w.korean) && w.level === section.level).length;
+        }
+    });
+
+    function sectionHTML(section) {
+        const remaining = section.totalAvailable - section.words.length;
         return `
-            <div class="suggestion-item" id="sug-${s.korean}">
-                <span class="sug-korean">${s.korean}</span>
-                <div class="sug-meta">
-                    <span class="sug-english">${s.english}</span>
-                    ${s.reading ? `<span class="sug-reading">[${s.reading}]</span>` : ''}
-                </div>
-                <span class="sug-topic-chip" title="${topicMeta?.label || s.topic}">${topicMeta?.icon || '📌'}</span>
-                <button class="sug-add-btn" onclick="addSuggestion('${s.korean}', '${safeEnglish}', '${safeReading}', '${s.topic}', '${s.level}', '${safeNotes}')">+ Add</button>
-            </div>
-        `;
-    }
-
-    container.innerHTML = `
-        <div class="suggestions-header">
-            <h2>💡 Suggested Words</h2>
-            <p>Personalized by your current level and TOPIK goal.</p>
-        </div>
-
-        ${smartSuggestions.length > 0 ? `
-        <div class="smart-suggestions">
-            <h3>🎯 Insights</h3>
-            ${smartSuggestions.map(s => `<p>${s.message}</p>`).join('')}
-        </div>
-        ` : ''}
-
-        ${sections.length === 0 ? `
-            <div class="empty-state">
-                <div class="icon">🎉</div>
-                <h2>All caught up!</h2>
-                <p>You've added all the starter words. Keep adding your own vocabulary in the Add tab.</p>
-            </div>
-        ` : sections.map(section => `
             <div class="level-suggestion-section">
-                <div class="level-section-header" style="border-left: 4px solid ${section.color}; background: ${section.light}">
+                <div class="level-section-header" style="border-left:4px solid ${section.color};background:${section.light}">
                     <span class="level-section-badge" style="background:${section.color}">${section.short}</span>
                     <div class="level-section-title-wrap">
                         <strong>${section.title}</strong>
@@ -498,12 +494,112 @@ function renderSuggestionsView() {
                         <span class="level-section-pct">${section.progress}%</span>
                     </div>
                 </div>
-                <div class="suggestion-list">
-                    ${section.words.map(s => wordRow(s)).join('')}
+                <div class="suggestion-list" id="sug-list-${section.level}">
+                    ${section.words.map(s => buildWordRow(s)).join('')}
                 </div>
+                ${remaining > 0 ? `
+                <button id="sug-more-${section.level}" class="sug-show-more"
+                        onclick="showMoreSection('${section.level}', ${section.words.length})">
+                    Show 20 more &nbsp;·&nbsp; ${remaining} remaining
+                </button>` : ''}
             </div>
-        `).join('')}
+        `;
+    }
+
+    container.innerHTML = `
+        <div class="suggestions-header">
+            <h2>💡 Suggested Words</h2>
+            <div class="sug-search-wrap">
+                <input type="search" id="sug-search" class="sug-search-input"
+                       placeholder="Search ${poolTotal.toLocaleString()} words by Korean, English, or romaja…"
+                       oninput="filterSuggestions(this.value)">
+            </div>
+        </div>
+
+        ${smartSuggestions.length > 0 ? `
+        <div class="smart-suggestions">
+            <h3>🎯 Insights</h3>
+            ${smartSuggestions.map(s => `<p>${s.message}</p>`).join('')}
+        </div>` : ''}
+
+        <div id="sug-normal">
+            ${sections.length === 0 ? `
+                <div class="empty-state">
+                    <div class="icon">🎉</div>
+                    <h2>All caught up!</h2>
+                    <p>You have added all suggested words. Keep adding your own in the Add tab.</p>
+                </div>
+            ` : sections.map(sectionHTML).join('')}
+        </div>
+
+        <div id="sug-search-results" style="display:none"></div>
     `;
+}
+
+// Live search across the full pool
+function filterSuggestions(query) {
+    const normal = document.getElementById('sug-normal');
+    const results = document.getElementById('sug-search-results');
+    const q = (query || '').trim();
+
+    if (!q) {
+        normal.style.display = '';
+        results.style.display = 'none';
+        results.innerHTML = '';
+        return;
+    }
+
+    normal.style.display = 'none';
+    results.style.display = '';
+
+    const cards = Storage.getCards();
+    const deckSet = new Set(cards.map(c => c.front));
+    const ql = q.toLowerCase();
+    const hits = SuggestionEngine.pool
+        .filter(w => !deckSet.has(w.korean))
+        .filter(w =>
+            w.korean.includes(q) ||
+            w.english.toLowerCase().includes(ql) ||
+            (w.reading || '').toLowerCase().includes(ql)
+        )
+        .slice(0, 100);
+
+    if (hits.length === 0) {
+        results.innerHTML = `<p style="color:var(--text-light);text-align:center;padding:32px 0">No matches for "${q}"</p>`;
+        return;
+    }
+
+    results.innerHTML = `
+        <p style="color:var(--text-light);font-size:0.85rem;margin-bottom:12px">
+            ${hits.length === 100 ? '100+' : hits.length} result${hits.length === 1 ? '' : 's'}
+        </p>
+        <div class="suggestion-list">${hits.map(s => buildWordRow(s)).join('')}</div>
+    `;
+}
+
+// Append 20 more words to a section when "show more" is tapped
+function showMoreSection(sectionKey, offset) {
+    const cards = Storage.getCards();
+    const deckSet = new Set(cards.map(c => c.front));
+    const pool = sectionKey === 'medical'
+        ? SuggestionEngine.pool.filter(w => !deckSet.has(w.korean) && w.topic === 'medical')
+        : SuggestionEngine.pool.filter(w => !deckSet.has(w.korean) && w.level === sectionKey);
+
+    const batch = pool.slice(offset, offset + 20);
+    const listEl = document.getElementById(`sug-list-${sectionKey}`);
+    const btnEl = document.getElementById(`sug-more-${sectionKey}`);
+    if (!listEl || batch.length === 0) return;
+
+    batch.forEach(w => listEl.insertAdjacentHTML('beforeend', buildWordRow(w)));
+
+    const newOffset = offset + batch.length;
+    if (!btnEl) return;
+    if (newOffset >= pool.length) {
+        btnEl.remove();
+    } else {
+        btnEl.setAttribute('onclick', `showMoreSection('${sectionKey}', ${newOffset})`);
+        btnEl.textContent = `Show 20 more · ${pool.length - newOffset} remaining`;
+    }
 }
 
 function addSuggestion(korean, english, reading, topic, level, notes) {
