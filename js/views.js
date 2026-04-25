@@ -804,6 +804,14 @@ function renderSettingsView() {
 
             <div class="settings-row">
                 <div>
+                    <label>Import Vocabulary (CSV)</label>
+                    <div class="setting-desc">Paste any TOPIK word list — korean, english, reading, level, topic, notes</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="showCSVImport()">Import CSV</button>
+            </div>
+
+            <div class="settings-row">
+                <div>
                     <label>Import Data</label>
                     <div class="setting-desc">Restore from a previous backup</div>
                 </div>
@@ -834,6 +842,21 @@ function renderSettingsView() {
                 <p style="margin-bottom:12px;font-size:0.85rem;color:var(--text-light);">Paste your backup data here:</p>
                 <textarea id="import-content" style="width:100%;min-height:120px;font-family:monospace;font-size:0.8rem;" placeholder="Paste JSON here..."></textarea>
                 <button class="btn btn-primary btn-sm" onclick="doImport()" style="margin-top:12px;">Import</button>
+            </div>
+        </div>
+
+        <div id="csv-import-area" style="display:none;">
+            <div class="card">
+                <h3 class="card-title">📋 Import Vocabulary (CSV)</h3>
+                <p style="margin-bottom:4px;font-size:0.85rem;color:var(--text-light);">Column order (header row optional):</p>
+                <code style="display:block;font-size:0.75rem;background:var(--bg);padding:8px;border-radius:6px;margin-bottom:12px;color:var(--text);">korean, english, reading, level, topic, notes</code>
+                <p style="margin-bottom:8px;font-size:0.8rem;color:var(--text-light);">
+                    <strong>level</strong>: TOPIK1–TOPIK6 (or 1–6) &nbsp;·&nbsp;
+                    <strong>topic</strong>: home / medical / church / food / daily / transport / emotions / phrases / family / etc.<br>
+                    Omit optional columns — only korean + english are required. Duplicates are skipped automatically.
+                </p>
+                <textarea id="csv-import-content" style="width:100%;min-height:140px;font-family:monospace;font-size:0.8rem;" placeholder="안녕하세요,hello,annyeonghaseyo,TOPIK1,phrases&#10;감사합니다,thank you,gamsahamnida,TOPIK1,phrases"></textarea>
+                <button class="btn btn-primary btn-sm" onclick="doCSVImport()" style="margin-top:12px;">Import Words</button>
             </div>
         </div>
     `;
@@ -898,4 +921,138 @@ function resetAll() {
     Storage.clearAll();
     showToast('All data reset. Reloading...', 'info');
     setTimeout(() => location.reload(), 1500);
+}
+
+// ============ CSV IMPORT ============
+
+function showCSVImport() {
+    const el = document.getElementById('csv-import-area');
+    if (!el) return;
+    const wasHidden = el.style.display === 'none';
+    el.style.display = wasHidden ? 'block' : 'none';
+    document.getElementById('import-area').style.display = 'none';
+    document.getElementById('export-area').style.display = 'none';
+    if (wasHidden) el.querySelector('textarea').focus();
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+            inQuotes = !inQuotes;
+        } else if (ch === ',' && !inQuotes) {
+            result.push(field.trim());
+            field = '';
+        } else {
+            field += ch;
+        }
+    }
+    result.push(field.trim());
+    return result;
+}
+
+function normalizeLevel(raw) {
+    if (!raw) return 'TOPIK1';
+    const s = raw.trim().toUpperCase().replace(/[\s\-_]/g, '');
+    if (s === '1' || s === 'TOPIK1' || s === 'T1' || s === 'L1' || s === 'TOPIKI1') return 'TOPIK1';
+    if (s === '2' || s === 'TOPIK2' || s === 'T2' || s === 'L2' || s === 'TOPIKI2') return 'TOPIK2';
+    if (s === '3' || s === 'TOPIK3' || s === 'T3' || s === 'L3' || s === 'TOPIKII3') return 'TOPIK3';
+    if (s === '4' || s === 'TOPIK4' || s === 'T4' || s === 'L4' || s === 'TOPIKII4') return 'TOPIK4';
+    if (s === '5' || s === 'TOPIK5' || s === 'T5' || s === 'L5' || s === 'TOPIKII5') return 'TOPIK5';
+    if (s === '6' || s === 'TOPIK6' || s === 'T6' || s === 'L6' || s === 'TOPIKII6') return 'TOPIK6';
+    return 'TOPIK1';
+}
+
+function hasKorean(str) {
+    return /[가-힣ᄀ-ᇿ㄰-㆏]/.test(str);
+}
+
+function doCSVImport() {
+    const raw = document.getElementById('csv-import-content').value.trim();
+    if (!raw) { showToast('Paste some CSV data first', 'error'); return; }
+
+    const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) { showToast('No data found', 'error'); return; }
+
+    // Detect header row (first cell doesn't contain Korean)
+    const firstCols = parseCSVLine(lines[0]);
+    const isHeader = firstCols[0] && !hasKorean(firstCols[0]);
+
+    // Build column index map from headers (or use default order)
+    const COL_DEFAULTS = { korean: 0, english: 1, reading: 2, level: 3, topic: 4, notes: 5 };
+    let colMap = { ...COL_DEFAULTS };
+    if (isHeader) {
+        const headers = firstCols.map(h => h.toLowerCase().replace(/[\s_\-]/g, ''));
+        const find = (...aliases) => {
+            for (const a of aliases) {
+                const i = headers.indexOf(a);
+                if (i !== -1) return i;
+            }
+            return -1;
+        };
+        colMap = {
+            korean:  find('korean', 'front', 'word', 'hangul', '한국어') >= 0 ? find('korean', 'front', 'word', 'hangul', '한국어') : 0,
+            english: find('english', 'back', 'meaning', 'translation', '영어') >= 0 ? find('english', 'back', 'meaning', 'translation', '영어') : 1,
+            reading: find('reading', 'romanization', 'pronunciation', 'romaja'),
+            level:   find('level', 'topik', 'toplevel'),
+            topic:   find('topic', 'category', 'tag'),
+            notes:   find('notes', 'note', 'comment', 'memo'),
+        };
+    }
+
+    const validTopics = Object.keys(TOPIC_METADATA);
+    const cards = Storage.getCards();
+    const existing = new Set(cards.map(c => c.front));
+    const newCards = [];
+    let skipped = 0;
+
+    const dataLines = isHeader ? lines.slice(1) : lines;
+    for (const line of dataLines) {
+        if (!line.trim()) continue;
+        const cols = parseCSVLine(line);
+        const korean = cols[colMap.korean]?.trim();
+        const english = cols[colMap.english]?.trim();
+        if (!korean || !english || !hasKorean(korean)) { skipped++; continue; }
+        if (existing.has(korean)) { skipped++; continue; }
+
+        const rawTopic = colMap.topic >= 0 ? (cols[colMap.topic]?.trim().toLowerCase() || '') : '';
+        const topic = validTopics.includes(rawTopic) ? rawTopic : 'phrases';
+
+        newCards.push({
+            id: 'card_' + Date.now() + '_' + newCards.length,
+            front: korean,
+            back: english,
+            reading: colMap.reading >= 0 ? (cols[colMap.reading]?.trim() || '') : '',
+            notes: colMap.notes >= 0 ? (cols[colMap.notes]?.trim() || '') : '',
+            topic,
+            level: normalizeLevel(colMap.level >= 0 ? cols[colMap.level] : ''),
+            created: Date.now(),
+            interval: 0,
+            repetitions: 0,
+            easeFactor: 2.5,
+            nextReview: Date.now(),
+            lastReviewed: null,
+            audioData: null,
+            isStarter: false,
+        });
+        existing.add(korean);
+    }
+
+    if (newCards.length > 0) {
+        cards.push(...newCards);
+        Storage.saveCards(cards);
+        const stats = Storage.getStats();
+        stats.cardsAdded += newCards.length;
+        Storage.saveStats(stats);
+    }
+
+    const msg = `Imported ${newCards.length} word${newCards.length !== 1 ? 's' : ''}${skipped > 0 ? `, ${skipped} skipped` : ''}`;
+    showToast(msg, newCards.length > 0 ? 'success' : 'info');
+    if (newCards.length > 0) {
+        document.getElementById('csv-import-content').value = '';
+        document.getElementById('csv-import-area').style.display = 'none';
+    }
 }
