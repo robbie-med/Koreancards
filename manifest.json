@@ -1,0 +1,26 @@
+{
+  "name": "한국어 연습 — Korean Flashcards",
+  "short_name": "Korean Cards",
+  "description": "Spaced-repetition Korean flashcards for TOPIK exam preparation. Works fully offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F5F5F5",
+  "theme_color": "#3F51B5",
+  "orientation": "portrait-primary",
+  "lang": "ko",
+  "categories": ["education", "medical"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
