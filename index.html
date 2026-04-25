@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국어 연습 - Korean Flashcards</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/study.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/stats.css">
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <h1>🇰🇷 한국어 연습</h1>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-view="study">📚 Study</button>
+                <button class="nav-btn" data-view="cards">📝 Cards</button>
+                <button class="nav-btn" data-view="add">➕ Add</button>
+                <button class="nav-btn" data-view="suggestions">💡 Words</button>
+                <button class="nav-btn" data-view="stats">📊 Stats</button>
+                <button class="nav-btn" data-view="settings">⚙️</button>
+            </nav>
+            <div class="streak-display">
+                <span class="streak-icon">🔥</span>
+                <span id="streak-count">0</span> days
+            </div>
+        </header>
+
+        <main id="main-content">
+            <!-- Views injected here -->
+        </main>
+
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Templates -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/srs.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/topik.js"></script>
+    <script src="js/suggestions.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
