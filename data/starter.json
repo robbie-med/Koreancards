@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "description": "Starter Korean vocabulary for family medicine resident",
+  "total_words": 181,
+  "topics": [
+    "home", "cat", "garden", "church", "music", 
+    "family", "rent", "medical", "art", "chemistry", "phrases"
+  ]
+}
