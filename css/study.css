@@ -1,0 +1,259 @@
+/* ===== STUDY VIEW ===== */
+.study-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+.study-progress {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin: 0 12px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* ===== FLASHCARD ===== */
+.flashcard {
+    width: 100%;
+    max-width: 500px;
+    min-height: 320px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    user-select: none;
+}
+
+.flashcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.flashcard.flipped {
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFF 100%);
+}
+
+.card-front {
+    font-size: 2.2rem;
+    font-family: var(--font-ko);
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+.card-back {
+    display: none;
+}
+
+.flashcard.flipped .card-front { display: none; }
+.flashcard.flipped .card-back { display: block; }
+
+.card-back .back-korean {
+    font-size: 1.8rem;
+    font-family: var(--font-ko);
+    color: var(--primary);
+    margin-bottom: 12px;
+}
+
+.card-back .back-english {
+    font-size: 1.3rem;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.card-back .back-notes {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.card-back .back-reading {
+    font-size: 1rem;
+    color: var(--secondary);
+    margin-bottom: 8px;
+    font-family: var(--font-ko);
+}
+
+/* ===== AUDIO CONTROLS ON CARD ===== */
+.card-audio {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+.audio-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+
+.audio-btn:hover { background: var(--bg); }
+.audio-btn.playing { background: var(--primary); color: white; }
+
+/* ===== FLIP HINT ===== */
+.flip-hint {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 12px;
+}
+
+/* ===== DIFFICULTY BUTTONS ===== */
+.difficulty-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.diff-btn {
+    flex: 1;
+    padding: 14px 8px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.diff-btn .interval {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+.diff-btn-again { background: #FFEBEE; color: var(--danger); }
+.diff-btn-again:hover { background: #EF9A9A; }
+
+.diff-btn-hard { background: #FFF3E0; color: #E65100; }
+.diff-btn-hard:hover { background: #FFCC80; }
+
+.diff-btn-good { background: #E8F5E9; color: var(--success); }
+.diff-btn-good:hover { background: #A5D6A7; }
+
+.diff-btn-easy { background: #E3F2FD; color: #1565C0; }
+.diff-btn-easy:hover { background: #90CAF9; }
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.empty-state h2 {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: var(--text-light);
+    margin-bottom: 24px;
+}
+
+/* ===== READING PRACTICE MODE ===== */
+.reading-mode .card-front {
+    font-size: 2.6rem;
+    letter-spacing: 0.05em;
+}
+
+.reading-practice-bar {
+    width: 100%;
+    max-width: 500px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+}
+
+.reading-practice-bar .mic-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    background: white;
+    cursor: pointer;
+    font-size: 1.3rem;
+    transition: all 0.2s;
+}
+
+.reading-practice-bar .mic-btn:hover { background: var(--primary); color: white; }
+.reading-practice-bar .mic-btn.recording { 
+    background: var(--danger); 
+    border-color: var(--danger);
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.reading-practice-bar .reading-status {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.reading-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.reading-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}

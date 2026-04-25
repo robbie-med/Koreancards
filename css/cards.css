@@ -1,0 +1,229 @@
+/* ===== CARDS LIST VIEW ===== */
+.cards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.cards-header h2 { font-size: 1.3rem; }
+
+.cards-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover { background: var(--bg); }
+.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ===== CARD ITEM ===== */
+.card-item {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+}
+
+.card-item:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateX(4px);
+}
+
+.card-item .card-number {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    min-width: 30px;
+}
+
+.card-item .card-content {
+    flex: 1;
+}
+
+.card-item .card-korean {
+    font-family: var(--font-ko);
+    font-size: 1.15rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.card-item .card-english {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.card-item .card-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.card-item .card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.card-item .card-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.card-item .card-actions button:hover { background: var(--bg); }
+
+/* ===== ADD CARD FORM ===== */
+.add-card-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.add-card-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 600px) {
+    .add-card-form .form-row { grid-template-columns: 1fr; }
+}
+
+/* ===== AUDIO RECORDER ===== */
+.audio-recorder {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.audio-recorder .recorder-status {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-bottom: 12px;
+}
+
+.recorder-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.rec-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--danger);
+    background: white;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rec-btn:hover { background: #FFEBEE; }
+.rec-btn.recording { 
+    background: var(--danger); 
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+.play-preview-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.play-preview-btn:hover { background: var(--bg); }
+.play-preview-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.audio-waveform {
+    height: 40px;
+    background: linear-gradient(90deg, var(--border) 0%, var(--primary) 50%, var(--border) 100%);
+    border-radius: 4px;
+    margin: 12px 0;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+}
+
+.audio-waveform.active {
+    opacity: 1;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+    background-size: 200% 100%;
+    animation: wave 1s linear infinite;
+}
+
+@keyframes wave {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ===== TAG INPUT ===== */
+.tag-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    min-height: 44px;
+    align-items: center;
+}
+
+.tag-input-container input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 80px;
+    font-size: 0.9rem;
+    padding: 4px;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--bg);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: default;
+}
+
+.tag .tag-remove {
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.tag .tag-remove:hover { color: var(--danger); }
